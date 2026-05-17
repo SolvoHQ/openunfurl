@@ -76,23 +76,15 @@ const r = await fetch(
 );
 const meta = await r.json(); // { title, description, image, favicon, ... }</pre>
 
-  <h2>Use it from an AI agent / MCP client</h2>
+  <h2>Use as an MCP tool (AI agents)</h2>
   <p class="pitch">OpenUnfurl is also a remote <a href="https://modelcontextprotocol.io">MCP</a>
-  server. Point any MCP client at the URL below and your agent gets a
-  <code class="inline">unfurl</code> tool — no signup, no API key, no OAuth.
-  Streamable HTTP transport, stateless JSON mode.</p>
-  <pre id="mcpurl" class="copy" title="click to copy">https://openunfurl.vercel.app/api/mcp</pre>
-  <pre id="mcpcfg" class="copy" title="click to copy">{
-  "mcpServers": {
-    "openunfurl": {
-      "type": "http",
-      "url": "https://openunfurl.vercel.app/api/mcp"
-    }
-  }
-}</pre>
-  <p class="pitch">Drop that into your MCP client config (Claude Desktop / Cursor
-  / any client that speaks the Streamable HTTP transport). The agent then calls
-  <code class="inline">unfurl({ url })</code> and gets clean preview JSON back.</p>
+  server (Streamable HTTP, stateless). Drop this into any MCP client config —
+  Claude Desktop, Cursor, or any Streamable-HTTP client — and the agent gets a
+  <code class="inline">unfurl</code> tool. No signup, no API key, no OAuth.</p>
+  <pre id="mcpcfg" class="copy" title="click to copy">{ "mcpServers": { "openunfurl": { "url": "https://openunfurl.vercel.app/api/mcp" } } }</pre>
+  <p class="pitch">The remote endpoint is
+  <code class="inline">https://openunfurl.vercel.app/api/mcp</code>, exposing the
+  single <code class="inline">unfurl</code> tool.</p>
 
   <h2>Limitations</h2>
   <div class="box">

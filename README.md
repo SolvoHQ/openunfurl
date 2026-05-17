@@ -1,20 +1,41 @@
 # OpenUnfurl
 
-**Anonymous link-preview / unfurl API. No signup. No API key. One GET request.**
-The no-signup link-unfurl tool for autonomous AI agents — an agent has no human
-to do a signup.
+**A zero-signup link-unfurl / link-preview API. No account, no API key — one GET request.**
 
-Give it a URL, get back the page's title, description, image, favicon, and Open
-Graph / Twitter Card metadata as JSON. No account, no token, no rate-limit
-email — just a single GET (or one MCP `tools/call`).
+Give it any public URL, get back clean preview metadata (title, description,
+image, siteName, favicon, Open Graph / Twitter Card, oembed) as JSON. Built so
+autonomous AI agents can use it as a tool — an agent has no human to do a signup.
 
 Live: **https://openunfurl.vercel.app**
 
-## curl
+## Quick start
 
 ```sh
-curl "https://openunfurl.vercel.app/api/unfurl?url=https://github.com/SolvoHQ"
+curl "https://openunfurl.vercel.app/api/unfurl?url=https://github.com"
 ```
+
+Sample response:
+
+```json
+{
+  "url": "https://github.com",
+  "resolvedUrl": "https://github.com/",
+  "title": "GitHub · Build and ship software on a single, collaborative platform",
+  "description": "Join the world's most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity.",
+  "image": "https://github.githubassets.com/assets/campaign-social-031d6161fa10.png",
+  "siteName": "GitHub",
+  "type": "object",
+  "favicon": "https://github.githubassets.com/favicons/favicon.svg",
+  "oembed": null,
+  "fetchedAt": "2026-05-17T00:00:00.000Z",
+  "engine": "static-html-v0.1",
+  "note": "v0.1 parses static HTML only — no JS/SPA render"
+}
+```
+
+Any missing field is `null`. Errors return JSON with an `error` key and an
+appropriate HTTP status (`400` bad/blocked/missing URL, `422` fetch failed,
+`429` rate limited, `405` wrong method).
 
 ## JavaScript
 
@@ -26,29 +47,22 @@ const r = await fetch(
 const meta = await r.json(); // { title, description, image, favicon, ... }
 ```
 
-## MCP / AI agents
+## Use as an MCP tool (AI agents / Claude / Cursor / LLM clients)
 
 OpenUnfurl is also a remote [MCP](https://modelcontextprotocol.io) server, so an
-autonomous agent can use it as a tool with **no signup, no API key, no OAuth**.
+agent can call it as a tool with **no signup, no API key, no OAuth**.
 
 - Endpoint: **`https://openunfurl.vercel.app/api/mcp`**
-- Transport: Streamable HTTP, **stateless JSON mode** (POST JSON-RPC 2.0, single
+- Transport: **Streamable HTTP, stateless** (POST JSON-RPC 2.0, single
   `application/json` response — no sessions, no SSE)
-- Tool: `unfurl` — input `{ "url": "https://example.com" }`, returns the same
-  preview JSON as the REST endpoint (also as `structuredContent`)
+- Exposes exactly one tool: **`unfurl`** — input `{ "url": "https://example.com" }`,
+  returns the same preview JSON as the REST endpoint (also as `structuredContent`)
 
-Add it to any MCP client (Claude Desktop, Cursor, or any client speaking the
-Streamable HTTP transport):
+Drop this into any MCP client config (Claude Desktop, Cursor, or any client that
+speaks the Streamable HTTP transport):
 
 ```json
-{
-  "mcpServers": {
-    "openunfurl": {
-      "type": "http",
-      "url": "https://openunfurl.vercel.app/api/mcp"
-    }
-  }
-}
+{ "mcpServers": { "openunfurl": { "url": "https://openunfurl.vercel.app/api/mcp" } } }
 ```
 
 Quick smoke test:
@@ -59,38 +73,24 @@ curl -s -X POST https://openunfurl.vercel.app/api/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"unfurl","arguments":{"url":"https://example.com"}}}'
 ```
 
-## Response shape
+Over MCP, an upstream error comes back as a tool result with `isError: true`.
 
-```json
-{
-  "url": "https://github.com/SolvoHQ",
-  "resolvedUrl": "https://github.com/SolvoHQ",
-  "title": "SolvoHQ",
-  "description": "SolvoHQ has 37 repositories available. Follow their code on GitHub.",
-  "image": "https://avatars.githubusercontent.com/u/269872106?s=280&v=4",
-  "siteName": "GitHub",
-  "type": "profile",
-  "favicon": "https://github.githubassets.com/favicons/favicon.png",
-  "oembed": null,
-  "fetchedAt": "2026-05-17T01:02:35.484Z",
-  "engine": "static-html-v0.1",
-  "note": "v0.1 parses static HTML only — no JS/SPA render"
-}
-```
+## Why
 
-Any missing field is `null`. Errors return JSON with an `error` key and an
-appropriate HTTP status (`400` bad/blocked/missing URL, `422` fetch failed,
-`429` rate limited, `405` wrong method). Over MCP, an upstream error comes back
-as a tool result with `isError: true`.
+Managed link-preview alternatives — Microlink, OpenGraph.io, LinkPreview.net,
+Unfurl.io, LinkPeek — all gate even their free tier behind a signup and/or an
+API key. OpenUnfurl does not: it's a single anonymous GET (or one MCP
+`tools/call`). That's especially useful to autonomous agents, which have no
+human in the loop to complete a signup or paste in a key.
 
-## Limitations (v0.1)
+## Limitations
 
-**v0.1 parses static HTML only** — no headless browser, no JS-rendered SPAs.
-If a site renders its `<meta>` tags client-side, you'll get the static
-fallback only. A headless-render tier is future work.
-
-It also applies an SSRF guard (rejects localhost / private / reserved IP
-ranges) and a best-effort per-instance IP rate limit.
+- **v0.1 parses static HTML only** — no headless browser, no JS-rendered SPAs.
+  If a site renders its `<meta>` tags client-side you get the static fallback.
+- **Best-effort per-instance IP rate limit** — a soft abuse brake, not a
+  guarantee (serverless instances are ephemeral and not shared).
+- **SSRF-guarded** — rejects localhost / private / reserved IP ranges.
+- **MIT licensed and self-hostable** — see below.
 
 ## Self-host — it's zero-dependency files
 
