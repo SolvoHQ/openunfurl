@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenUnfurl — link previews, no signup</title>
+<meta name="description" content="Anonymous link-preview / unfurl API. No account. No API key. One GET request.">
+<style>
+  :root { --fg:#16181a; --mut:#5b6168; --line:#d9dde1; --acc:#0a5; --bg:#fbfbf9; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--fg);
+    font:15px/1.6 ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 22px 80px; }
+  h1 { font-size:25px; letter-spacing:-.4px; margin:0 0 8px; }
+  .pitch { color:var(--mut); margin:0 0 30px; font-size:15px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.2px;
+       color:var(--mut); margin:38px 0 12px; font-weight:600; }
+  a { color:var(--acc); }
+  hr { border:0; border-top:1px solid var(--line); margin:34px 0; }
+  .demo { display:flex; gap:8px; flex-wrap:wrap; }
+  input[type=text] {
+    flex:1 1 340px; padding:10px 12px; border:1px solid var(--line);
+    background:#fff; font:inherit; color:var(--fg); border-radius:4px;
+  }
+  button {
+    padding:10px 18px; border:1px solid var(--fg); background:var(--fg);
+    color:#fff; font:inherit; cursor:pointer; border-radius:4px;
+  }
+  button:hover { background:#000; }
+  button:disabled { opacity:.5; cursor:default; }
+  pre {
+    background:#0e1012; color:#d6dde3; padding:16px; border-radius:6px;
+    overflow:auto; font-size:13px; line-height:1.55; margin:14px 0 0;
+    max-height:480px;
+  }
+  code.inline { background:#eceef0; padding:1px 5px; border-radius:3px; font-size:13px; }
+  .box {
+    border:1px solid var(--line); border-left:3px solid var(--fg);
+    padding:14px 16px; background:#fff; font-size:14px; color:var(--mut);
+  }
+  .box b { color:var(--fg); }
+  footer { margin-top:50px; color:var(--mut); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>OpenUnfurl — link previews, no signup.</h1>
+  <p class="pitch">Anonymous link-preview / unfurl API. No account. No API key. One GET request.</p>
+
+  <h2>Live demo</h2>
+  <div class="demo">
+    <input type="text" id="u" placeholder="https://github.com/SolvoHQ" value="https://github.com/SolvoHQ" spellcheck="false">
+    <button id="go">Unfurl →</button>
+  </div>
+  <pre id="out">// JSON response shows here</pre>
+
+  <h2>curl</h2>
+  <pre id="curl">curl "https://openunfurl.vercel.app/api/unfurl?url=https://github.com/SolvoHQ"</pre>
+
+  <h2>JavaScript</h2>
+  <pre id="snippet">const base = "https://openunfurl.vercel.app";
+const r = await fetch(
+  base + "/api/unfurl?url=" + encodeURIComponent("https://example.com")
+);
+const meta = await r.json(); // { title, description, image, favicon, ... }</pre>
+
+  <h2>Limitations</h2>
+  <div class="box">
+    <b>v0.1 parses static HTML only</b> — no headless browser, no JS-rendered SPAs.
+    <b>Open source</b> — self-host or just use it free.
+  </div>
+
+  <hr>
+  <footer>
+    Source &amp; self-host: <a href="https://github.com/SolvoHQ/openunfurl">github.com/SolvoHQ/openunfurl</a> · MIT
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('go');
+  var inp = document.getElementById('u');
+  var out = document.getElementById('out');
+  function run() {
+    var v = inp.value.trim();
+    if (!v) return;
+    btn.disabled = true;
+    out.textContent = '// fetching…';
+    fetch('/api/unfurl?url=' + encodeURIComponent(v))
+      .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (o) {
+        out.textContent = 'HTTP ' + o.s + '\n\n' + JSON.stringify(o.j, null, 2);
+      })
+      .catch(function (e) { out.textContent = 'error: ' + e; })
+      .finally(function () { btn.disabled = false; });
+  }
+  btn.addEventListener('click', run);
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
+})();
+</script>
+<script data-goatcounter="https://solvounfurl.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<noscript><img src="https://solvounfurl.goatcounter.com/count?p=/index-noscript" alt=""></noscript>
+</body>
+</html>
