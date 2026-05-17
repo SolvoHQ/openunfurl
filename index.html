@@ -36,6 +36,13 @@
     overflow:auto; font-size:13px; line-height:1.55; margin:14px 0 0;
     max-height:480px;
   }
+  pre.copy { cursor:pointer; position:relative; }
+  pre.copy:hover { outline:1px solid var(--acc); }
+  pre.copy::after {
+    content:"copy"; position:absolute; top:8px; right:10px;
+    font-size:11px; color:#8a939b; letter-spacing:.5px;
+  }
+  pre.copy.copied::after { content:"copied ✓"; color:#5fd08a; }
   code.inline { background:#eceef0; padding:1px 5px; border-radius:3px; font-size:13px; }
   .box {
     border:1px solid var(--line); border-left:3px solid var(--fg);
@@ -49,7 +56,8 @@
 <div class="wrap">
 
   <h1>OpenUnfurl — link previews, no signup.</h1>
-  <p class="pitch">Anonymous link-preview / unfurl API. No account. No API key. One GET request.</p>
+  <p class="pitch">Anonymous link-preview / unfurl API. No account. No API key. One GET request.
+  The no-signup link-unfurl tool for autonomous AI agents — an agent has no human to do a signup.</p>
 
   <h2>Live demo</h2>
   <div class="demo">
@@ -58,8 +66,8 @@
   </div>
   <pre id="out">// JSON response shows here</pre>
 
-  <h2>curl</h2>
-  <pre id="curl">curl "https://openunfurl.vercel.app/api/unfurl?url=https://github.com/SolvoHQ"</pre>
+  <h2>curl — copy &amp; paste</h2>
+  <pre id="curl" class="copy" title="click to copy">curl "https://openunfurl.vercel.app/api/unfurl?url=https://github.com/SolvoHQ"</pre>
 
   <h2>JavaScript</h2>
   <pre id="snippet">const base = "https://openunfurl.vercel.app";
@@ -67,6 +75,24 @@ const r = await fetch(
   base + "/api/unfurl?url=" + encodeURIComponent("https://example.com")
 );
 const meta = await r.json(); // { title, description, image, favicon, ... }</pre>
+
+  <h2>Use it from an AI agent / MCP client</h2>
+  <p class="pitch">OpenUnfurl is also a remote <a href="https://modelcontextprotocol.io">MCP</a>
+  server. Point any MCP client at the URL below and your agent gets a
+  <code class="inline">unfurl</code> tool — no signup, no API key, no OAuth.
+  Streamable HTTP transport, stateless JSON mode.</p>
+  <pre id="mcpurl" class="copy" title="click to copy">https://openunfurl.vercel.app/api/mcp</pre>
+  <pre id="mcpcfg" class="copy" title="click to copy">{
+  "mcpServers": {
+    "openunfurl": {
+      "type": "http",
+      "url": "https://openunfurl.vercel.app/api/mcp"
+    }
+  }
+}</pre>
+  <p class="pitch">Drop that into your MCP client config (Claude Desktop / Cursor
+  / any client that speaks the Streamable HTTP transport). The agent then calls
+  <code class="inline">unfurl({ url })</code> and gets clean preview JSON back.</p>
 
   <h2>Limitations</h2>
   <div class="box">
@@ -101,6 +127,28 @@ const meta = await r.json(); // { title, description, image, favicon, ... }</pre
   }
   btn.addEventListener('click', run);
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
+
+  // Click-to-copy on .copy <pre> blocks.
+  var copies = document.querySelectorAll('pre.copy');
+  for (var i = 0; i < copies.length; i++) {
+    (function (el) {
+      el.addEventListener('click', function () {
+        var txt = el.textContent;
+        function done() {
+          el.classList.add('copied');
+          setTimeout(function () { el.classList.remove('copied'); }, 1400);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(done, function () {});
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = txt; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); done(); } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      });
+    })(copies[i]);
+  }
 })();
 </script>
 <script data-goatcounter="https://solvounfurl.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
